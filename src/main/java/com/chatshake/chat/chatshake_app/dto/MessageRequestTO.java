@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class MessageRequest {
+public class MessageRequestTO {
     private String content;
     private String sender;
     private String roomId;
