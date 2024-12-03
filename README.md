@@ -1,3 +1,3 @@
-# chatshake
-# Using Java, Springboot, Rest Api & WebSocket
+# chatshake , A Chatting App
+# Java, Springboot, Rest Api & WebSocket
 # MongoDb Database
