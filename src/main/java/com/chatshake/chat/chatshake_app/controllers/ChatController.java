@@ -1,8 +1,8 @@
 package com.chatshake.chat.chatshake_app.controllers;
 
-import com.chatshake.chat.chatshake_app.dto.MessageRequest;
-import com.chatshake.chat.chatshake_app.models.ChatRoom;
-import com.chatshake.chat.chatshake_app.models.Message;
+import com.chatshake.chat.chatshake_app.dto.MessageRequestTO;
+import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
+import com.chatshake.chat.chatshake_app.models.MessageBO;
 import com.chatshake.chat.chatshake_app.repositories.ChatRoomRepository;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -24,10 +24,10 @@ public class ChatController {
 
     @MessageMapping("/sendMessage/{roomId}")
     @SendTo("/topic/room/{roomId}")
-    public Message sendMessage(@DestinationVariable String roomId, @RequestBody MessageRequest request){
-        ChatRoom room = roomRepository.findByRoomId(request.getRoomId());
+    public MessageBO sendMessage(@DestinationVariable String roomId, @RequestBody MessageRequestTO request){
+        ChatRoomBO room = roomRepository.findByRoomId(request.getRoomId());
 
-        Message message = new Message();
+        MessageBO message = new MessageBO();
         message.setContent(request.getContent());
         message.setSender(request.getSender());
         message.setTimeStamp(LocalDateTime.now());

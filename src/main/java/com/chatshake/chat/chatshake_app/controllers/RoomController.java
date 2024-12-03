@@ -1,7 +1,7 @@
 package com.chatshake.chat.chatshake_app.controllers;
 
-import com.chatshake.chat.chatshake_app.models.ChatRoom;
-import com.chatshake.chat.chatshake_app.models.Message;
+import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
+import com.chatshake.chat.chatshake_app.models.MessageBO;
 import com.chatshake.chat.chatshake_app.repositories.ChatRoomRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,15 +23,15 @@ public class RoomController {
         if(roomRepository.findByRoomId(roomId) != null){
             return ResponseEntity.badRequest().body("Chat Room already exists !");
         }
-        ChatRoom room = new ChatRoom();
+        ChatRoomBO room = new ChatRoomBO();
         room.setRoomId(roomId);
-        ChatRoom savedChatRoom = roomRepository.save(room);
+        ChatRoomBO savedChatRoom = roomRepository.save(room);
         return ResponseEntity.status(HttpStatus.CREATED).body(room);
     }
 
     @GetMapping("/{roomId}")
     public ResponseEntity<?> joinRoom(@PathVariable String  roomId){
-        ChatRoom room = roomRepository.findByRoomId(roomId);
+        ChatRoomBO room = roomRepository.findByRoomId(roomId);
         if(room == null){
             return ResponseEntity.badRequest().body("Chat Room not found !!");
         }
@@ -39,16 +39,16 @@ public class RoomController {
     }
 
     @GetMapping("/{roomId}/message")
-    public ResponseEntity<List<Message>> getMessages(@PathVariable String roomId,
-    @RequestParam(value ="page", defaultValue = "0", required = false) int page,
-                                                     @RequestParam(value = "size", defaultValue = "20", required = false) int size){
-        ChatRoom room = roomRepository.findByRoomId(roomId);
+    public ResponseEntity<List<MessageBO>> getMessages(@PathVariable String roomId,
+                                                       @RequestParam(value ="page", defaultValue = "0", required = false) int page,
+                                                       @RequestParam(value = "size", defaultValue = "20", required = false) int size){
+        ChatRoomBO room = roomRepository.findByRoomId(roomId);
         if(room == null){
             return ResponseEntity.badRequest().build();
         }
         // pagination
 
-        List<Message> messageList = room.getMessages();
+        List<MessageBO> messageList = room.getMessages();
         return ResponseEntity.ok(messageList);
     }
 }

@@ -10,8 +10,8 @@ import java.util.List;
 @Getter
 @Setter
 @Document(collection = "room")
-public class ChatRoom {
+public class ChatRoomBO {
     private String id;
     private String roomId;
-    private List<Message> messages = new ArrayList<>();
+    private List<MessageBO> messages = new ArrayList<>();
 }
