@@ -26,6 +26,7 @@ public class UserValidator implements Validator {
         if (target instanceof UserTO) {
             UserTO user = (UserTO) target;
             ValidationUtils.rejectIfEmptyOrWhitespace(errors, "username", "COM01E", "required");
+            ValidationUtils.rejectIfEmptyOrWhitespace(errors, "name", "COM01E", "required");
             ValidationUtils.rejectIfEmptyOrWhitespace(errors, "email", "COM01E", "required");
             ValidationUtils.rejectIfEmptyOrWhitespace(errors, "password", "COM01E", "required");
             if(user.getUsername()!=null){
