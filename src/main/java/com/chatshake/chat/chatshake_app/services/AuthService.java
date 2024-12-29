@@ -23,9 +23,9 @@ public class AuthService {
 
     public HashMap<String, String> authenticate(String username, String password) {
         User user = userRepository.findByUsername(username);
-        if (user != null && passwordEncoder.matches(password, user.getPassword())) {
+        if (user != null && user.getId() !=null &&  user.getPassword() !=null && passwordEncoder.matches(password, user.getPassword())) {
             HashMap<String, String> jwtTokenMap = new HashMap<>();
-            jwtTokenMap.put("token", jwtUtil.generateToken(username));
+            jwtTokenMap.put("token", jwtUtil.generateToken(username, user.getId()));
             return jwtTokenMap;
         }
         throw new RuntimeException("Invalid username or password");
