@@ -48,7 +48,7 @@ public class RoomController {
         }
         // pagination
 
-        List<MessageBO> messageList = room.getMessages();
-        return ResponseEntity.ok(messageList);
+//        List<MessageBO> messageList = room.getMessages();
+        return ResponseEntity.ok(null);
     }
 }
