@@ -12,11 +12,13 @@ import java.time.LocalDateTime;
 @Document(collection = "message")
 @NoArgsConstructor
 public class MessageBO {
+    private String roomId;
     private String sender;
     private String content;
     private LocalDateTime timeStamp;
 
-    public MessageBO(String sender, String content) {
+    public MessageBO(String roomId, String sender, String content) {
+        this.roomId = roomId;
         this.sender = sender;
         this.content = content;
         this.timeStamp = LocalDateTime.now();

@@ -18,10 +18,11 @@ public class JwtUtil {
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
     }
-    public String generateToken(String username, String id) {
+    public String generateToken(String username, String userId, String name) {
         return Jwts.builder()
                 .setSubject(username)
-                .setId(id)
+                .claim("userId", userId)
+                .claim("name", name)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY)

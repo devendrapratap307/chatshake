@@ -16,5 +16,5 @@ public class ChatRoomBO {
     private String id;
     private String roomId;
 //    private List<MessageBO> messages = new ArrayList<>(); // need to separate because of larger data
-    private List<String> members;
+    private List<String> participants;
 }
