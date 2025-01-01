@@ -22,7 +22,7 @@ public class UserDaoImpl implements UserDao {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public SearchRespTO searchUser(SearchReqTO searchReq) {
+    public SearchRespTO searchUser(SearchReqTO searchReq, boolean pageFlag) {
         SearchRespTO searchResReturn = new SearchRespTO();
         Query query = new Query();
         if (searchReq.getLabel() != null && !searchReq.getLabel().isEmpty()) {
@@ -31,11 +31,12 @@ public class UserDaoImpl implements UserDao {
         Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "username"));
         query.with(pageable);
         List<UserTempBO> users = mongoTemplate.find(query, UserTempBO.class);
-        Query countQuery = Query.of(query).limit(-1).skip(-1); // Reset skip/limit for accurate count
-        long total = mongoTemplate.count(countQuery, UserTempBO.class);
+        if(pageFlag){
+            Query countQuery = Query.of(query).limit(-1).skip(-1); // Reset skip/limit for accurate count
+            long total = mongoTemplate.count(countQuery, UserTempBO.class);
+            searchResReturn.setTotalRow(total);
+        }
         searchResReturn.setDataList(users);
-        searchResReturn.setTotalRow(total);
-//        return new PageImpl<>(users, pageable, total);
         return searchResReturn;
     }
 

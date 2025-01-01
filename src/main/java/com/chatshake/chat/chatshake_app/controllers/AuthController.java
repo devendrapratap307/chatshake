@@ -1,11 +1,9 @@
 package com.chatshake.chat.chatshake_app.controllers;
 
 import com.chatshake.chat.chatshake_app.dto.*;
-import com.chatshake.chat.chatshake_app.models.User;
 import com.chatshake.chat.chatshake_app.repositories.UserRepository;
 import com.chatshake.chat.chatshake_app.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +25,7 @@ public class AuthController {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private ModelMapper modelMapper;
+
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -52,16 +49,13 @@ public class AuthController {
             ErrorRespTO errorResp = ErrorRespTO.buildError(result);
             return new ResponseEntity<>(errorResp, HttpStatus.OK);
         }
-        String encryptedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encryptedPassword);
-        User userReturn = userRepository.save(this.modelMapper.map(user, User.class));
-        resp = ResponseTO.build(200, "M001","/user/add", "user", userReturn);
+        resp = ResponseTO.build(200, "M001","/user/add", "user", this.authService.saveUser(user));
         return new ResponseEntity<>(resp,HttpStatus.CREATED);
     }
 
     @PostMapping("/user/search")
-    public ResponseEntity<?> searchUser(@RequestBody SearchReqTO searchReqTO, Errors result, HttpServletRequest request) {
-        SearchRespTO searchResp = this.authService.searchUser(searchReqTO);
+    public ResponseEntity<?> searchUser(@RequestBody SearchReqTO searchReqTO, @RequestParam(value = "pageFlag", required = false) final boolean pageFlag, Errors result, HttpServletRequest request) {
+        SearchRespTO searchResp = this.authService.searchUser(searchReqTO, pageFlag);
         resp = ResponseTO.build(200, "M001","/user/search", "user", searchResp);
         return new ResponseEntity<>(resp,HttpStatus.CREATED);
     }
