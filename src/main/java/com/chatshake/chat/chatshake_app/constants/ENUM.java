@@ -10,5 +10,11 @@ public class ENUM {
     public enum ROOM_STATUS {
         ACT, DEL, BLOCK
     }
+    public enum MESSAGE_STATUS {
+        ACT, DEL, EDIT
+    }
+    public enum MESSAGE_TYPE {
+        JOIN, LEAVE, CHAT
+    }
 
 }

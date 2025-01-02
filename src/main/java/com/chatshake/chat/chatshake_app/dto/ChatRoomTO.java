@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class ChatRoomTO {
+public class ChatRoomTO extends AuditTO {
     private String id;
     private String roomName;
     private ENUM.ROOM_TYPE type;

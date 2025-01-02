@@ -5,6 +5,7 @@ import com.chatshake.chat.chatshake_app.dto.RoomRequestTO;
 import com.chatshake.chat.chatshake_app.dto.SearchReqTO;
 import com.chatshake.chat.chatshake_app.dto.SearchRespTO;
 import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
+import com.chatshake.chat.chatshake_app.models.MessageBO;
 import com.chatshake.chat.chatshake_app.models.RoomRequestBO;
 import com.chatshake.chat.chatshake_app.models.UserTempBO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Repository
@@ -53,6 +55,7 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
             } else {
                 query.addCriteria(Criteria.where("reqFrom").is(searchReq.getParticipant()));
             }
+            query.addCriteria(Criteria.where("status").nin(Arrays.asList(ENUM.REQUEST_TYPE.ACCEPTED, ENUM.REQUEST_TYPE.DENIED, ENUM.REQUEST_TYPE.REJECTED)));
             Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "id"));
             query.with(pageable);
             List<RoomRequestBO> requests =  mongoTemplate.find(query, RoomRequestBO.class);
@@ -110,6 +113,30 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
             searchResReturn.setDataList(rooms);
         }
         return searchResReturn;
+    }
+
+    @Override
+    public SearchRespTO searchMessages(SearchReqTO searchReq, boolean pageFlag) {
+        SearchRespTO searchResReturn = new SearchRespTO();
+        if(searchReq !=null && searchReq.getRoomId() !=null){
+            Query query = new Query();
+            query.addCriteria(Criteria.where("roomId").is(searchReq.getRoomId()));
+            Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "updatedDate"));
+            query.with(pageable);
+            List<MessageBO> messages =  mongoTemplate.find(query, MessageBO.class);
+            if(pageFlag){
+                Query countQuery = Query.of(query).limit(-1).skip(-1); // Reset skip/limit for accurate count
+                long total = mongoTemplate.count(countQuery, MessageBO.class);
+                searchResReturn.setTotalRow(total);
+            }
+            searchResReturn.setDataList(messages);
+        }
+        return searchResReturn;
+    }
+
+    @Override
+    public MessageBO saveOrUpdateMessage(MessageBO message) {
+        return mongoTemplate.save(message);
     }
 
 }

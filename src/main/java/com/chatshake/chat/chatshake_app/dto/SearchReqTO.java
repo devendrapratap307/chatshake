@@ -14,6 +14,7 @@ public class SearchReqTO {
     String name;
     String username;
 
+    String roomId;
     String participant; //userId
     ENUM.ROOM_TYPE type;
     ENUM.ROOM_STATUS status;

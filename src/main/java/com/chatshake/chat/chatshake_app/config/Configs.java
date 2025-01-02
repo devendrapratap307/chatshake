@@ -16,6 +16,6 @@ public class Configs {
 
     @Bean
     public AuditorAware<String> auditorProvider() {// for AuditBO
-        return () -> Optional.of(UserContext.getCurrentUser().getId()); // Replace with actual user retrieval logic
+        return () -> Optional.of(UserContext.getCurrentUser()!=null && UserContext.getCurrentUser().getId() !=null ? UserContext.getCurrentUser().getId() : "unknown"); // Replace with actual user retrieval logic
     }
 }

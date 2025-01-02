@@ -2,11 +2,9 @@ package com.chatshake.chat.chatshake_app.services;
 
 import com.chatshake.chat.chatshake_app.Dao.ChatRoomDao;
 import com.chatshake.chat.chatshake_app.constants.ENUM;
-import com.chatshake.chat.chatshake_app.dto.ChatRoomTO;
-import com.chatshake.chat.chatshake_app.dto.RoomRequestTO;
-import com.chatshake.chat.chatshake_app.dto.SearchReqTO;
-import com.chatshake.chat.chatshake_app.dto.SearchRespTO;
+import com.chatshake.chat.chatshake_app.dto.*;
 import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
+import com.chatshake.chat.chatshake_app.models.MessageBO;
 import com.chatshake.chat.chatshake_app.models.RoomRequestBO;
 import com.chatshake.chat.chatshake_app.models.UserTempBO;
 import com.chatshake.chat.chatshake_app.repositories.ChatRoomRepository;
@@ -17,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -81,6 +80,8 @@ public class ChatRoomServiceImpl implements ChatRoomService{
                         return "M010";
                     }
                     if(acceptFlag){
+                        currRoomReq.setStatus(ENUM.REQUEST_TYPE.ACCEPTED);
+                        RoomRequestBO roomReqReturn = roomRequestRepository.save(currRoomReq);
                         this.createChatRoom(null, ENUM.ROOM_TYPE.CHAT, Arrays.asList(roomRequest.getReqTo(), roomRequest.getReqFrom()));
                         return "M009";
                     } else if(roomRequest.getId() !=null){
@@ -130,7 +131,7 @@ public class ChatRoomServiceImpl implements ChatRoomService{
         if(participants !=null && !participants.isEmpty()){
             if(type !=null && type.equals(ENUM.ROOM_TYPE.SELF)){
                 List<ChatRoomBO> selfRoom = findRooms(participants.get(0), ENUM.ROOM_TYPE.SELF, ENUM.ROOM_STATUS.ACT);
-                if(selfRoom !=null){
+                if(selfRoom !=null && !selfRoom.isEmpty()){
                     return null;
                 }
             }
@@ -182,6 +183,42 @@ public class ChatRoomServiceImpl implements ChatRoomService{
                     }
                 }
                 return searchResp;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public SearchRespTO searchMessages(SearchReqTO searchReq, boolean pageFlag) {
+        if(searchReq != null){
+            SearchRespTO searchResp = this.chatRoomDao.searchMessages(searchReq, pageFlag);
+            if(searchResp !=null){
+                if( searchResp.getDataList() !=null){
+                    List<MessageRequestTO> msgList = this.mapperService.map(searchResp.getDataList(), MessageRequestTO.class) ;
+                    if(msgList != null && !msgList.isEmpty()){
+                        searchResp.setDataList(msgList);
+                    }
+                }
+                return searchResp;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public MessageRequestTO saveOrUpdateMessage(MessageRequestTO msg) {
+        if(msg != null){
+//            MessageBO message = new MessageBO();
+//            message.setRoomId(msg.getRoomId());
+//            message.setSender(msg.getSender());
+//            message.setContent(msg.getContent());
+//            message.setType(msg.getType());
+//            message.setStatus(msg.getStatus());
+//            message.setTimeStamp(LocalDateTime.now());
+            msg.setTimeStamp(LocalDateTime.now());
+            MessageBO messageReturn = this.chatRoomDao.saveOrUpdateMessage(this.mapperService.map(msg, MessageBO.class));
+            if(messageReturn!=null){
+                return this.mapperService.map(messageReturn, MessageRequestTO.class);
             }
         }
         return null;

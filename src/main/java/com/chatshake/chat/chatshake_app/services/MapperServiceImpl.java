@@ -15,7 +15,7 @@ public class MapperServiceImpl implements MapperService {
     @Override
     public <E, U> E map(U data, Class<E> className) {
         if(data !=null && className !=null){
-            modelMapper.map(data, className);
+            return modelMapper.map(data, className);
         }
         return null;
     }
