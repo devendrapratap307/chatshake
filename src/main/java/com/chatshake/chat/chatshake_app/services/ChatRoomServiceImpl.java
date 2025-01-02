@@ -105,13 +105,13 @@ public class ChatRoomServiceImpl implements ChatRoomService{
                         if(requestRow != null && requestRow.getReqFrom() !=null && requestRow.getReqTo() !=null){
                             if(receiveFlag){
                                 Optional<UserTempBO> member = this.userTempRepository.findById(requestRow.getReqFrom());
-                                if(member !=null){
+                                if(member.isPresent()){
                                     if(member.get().getName() !=null) requestRow.setLabel(member.get().getName());
                                     if(member.get().getUsername() !=null) requestRow.setUsername(member.get().getUsername());
                                 }
                             } else {
                                 Optional<UserTempBO> member = this.userTempRepository.findById(requestRow.getReqTo());
-                                if(member !=null){
+                                if(member.isPresent()){
                                     if(member.get().getName() !=null) requestRow.setLabel(member.get().getName());
                                     if(member.get().getUsername() !=null) requestRow.setUsername(member.get().getUsername());
                                 }
@@ -146,6 +146,15 @@ public class ChatRoomServiceImpl implements ChatRoomService{
     }
 
     @Override
+    public ChatRoomTO createChatRoom(ChatRoomTO chatRoom) {
+        if(chatRoom !=null){
+            ChatRoomBO chatRoomReturn = chatRoomRepository.save(mapperService.map(chatRoom, ChatRoomBO.class));
+            return modelMapper.map(chatRoomReturn, ChatRoomTO.class);
+        }
+        return null;
+    }
+
+    @Override
     public List<ChatRoomBO> findRooms(String participant, ENUM.ROOM_TYPE type, ENUM.ROOM_STATUS status) {
         if(participant != null){
             return this.chatRoomDao.findRooms(participant, type, status);
@@ -162,18 +171,31 @@ public class ChatRoomServiceImpl implements ChatRoomService{
                     List<ChatRoomTO> chatList = this.mapperService.map(searchResp.getDataList(), ChatRoomTO.class) ;
                     if(chatList != null){
                         for (ChatRoomTO chatRoomRow : chatList) {
-                            if(searchReq!=null && searchReq.getParticipant() !=null && chatRoomRow != null && chatRoomRow.getParticipants() != null && chatRoomRow.getType() !=null && chatRoomRow.getType().equals(ENUM.ROOM_TYPE.CHAT)){
-                                for (String participant : chatRoomRow.getParticipants()) {
-                                    if(participant!=null && !participant.equals(searchReq.getParticipant())){
-                                        Optional<UserTempBO> member = this.userTempRepository.findById(participant);
-                                        if(member !=null){
-                                            if(member.get().getName() !=null){
-                                                chatRoomRow.setRoomName(member.get().getName());
-                                            } else if(member.get().getUsername() !=null){
-                                                chatRoomRow.setRoomName(member.get().getUsername());
-                                            } else {
-                                                chatRoomRow.setRoomName("Unknown");
+                            if(searchReq!=null && searchReq.getParticipant() !=null && chatRoomRow != null && chatRoomRow.getParticipants() != null && chatRoomRow.getType() !=null){
+                                if(chatRoomRow.getType().equals(ENUM.ROOM_TYPE.CHAT)){
+                                    for (String participant : chatRoomRow.getParticipants()) {
+                                        if(participant!=null && !participant.equals(searchReq.getParticipant())){
+                                            Optional<UserTempBO> member = this.userTempRepository.findById(participant);
+                                            if(member.isPresent()){
+                                                if(member.get().getName() !=null){
+                                                    chatRoomRow.setRoomName(member.get().getName());
+                                                } else if(member.get().getUsername() !=null){
+                                                    chatRoomRow.setRoomName(member.get().getUsername());
+                                                } else {
+                                                    chatRoomRow.setRoomName("Unknown");
+                                                }
                                             }
+                                        }
+                                    }
+                                } else if(chatRoomRow.getType().equals(ENUM.ROOM_TYPE.SELF)){
+                                    Optional<UserTempBO> member = this.userTempRepository.findById(searchReq.getParticipant());
+                                    if(member.isPresent()){
+                                        if(member.get().getName() !=null){
+                                            chatRoomRow.setRoomName(member.get().getName());
+                                        } else if(member.get().getUsername() !=null){
+                                            chatRoomRow.setRoomName(member.get().getUsername());
+                                        } else {
+                                            chatRoomRow.setRoomName("Unknown");
                                         }
                                     }
                                 }

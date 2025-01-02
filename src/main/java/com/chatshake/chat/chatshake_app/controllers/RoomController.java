@@ -1,10 +1,7 @@
 package com.chatshake.chat.chatshake_app.controllers;
 
 import com.chatshake.chat.chatshake_app.constants.MSG_CONST;
-import com.chatshake.chat.chatshake_app.dto.ResponseTO;
-import com.chatshake.chat.chatshake_app.dto.RoomRequestTO;
-import com.chatshake.chat.chatshake_app.dto.SearchReqTO;
-import com.chatshake.chat.chatshake_app.dto.SearchRespTO;
+import com.chatshake.chat.chatshake_app.dto.*;
 import com.chatshake.chat.chatshake_app.models.MessageBO;
 import com.chatshake.chat.chatshake_app.repositories.ChatRoomRepository;
 import com.chatshake.chat.chatshake_app.services.ChatRoomService;
@@ -98,6 +95,12 @@ public class RoomController {
     public ResponseEntity<?> searchChatRoom(@RequestBody SearchReqTO searchReqTO, @RequestParam(value = "pageFlag", required = false) final boolean pageFlag, Errors result, HttpServletRequest request) {
         SearchRespTO searchResp = this.roomService.searchRooms(searchReqTO, pageFlag);
         resp = ResponseTO.build(200, "M001","/user/search", "chatRoom", searchResp);
+        return new ResponseEntity<>(resp,HttpStatus.CREATED);
+    }
+
+    @PostMapping("/room/add")
+    public ResponseEntity<?> addChatRoom(@RequestBody ChatRoomTO chatRoom, Errors result, HttpServletRequest request) {
+        resp = ResponseTO.build(200, "M001","/room/add", "chatRoom", this.roomService.createChatRoom(chatRoom));
         return new ResponseEntity<>(resp,HttpStatus.CREATED);
     }
 }
