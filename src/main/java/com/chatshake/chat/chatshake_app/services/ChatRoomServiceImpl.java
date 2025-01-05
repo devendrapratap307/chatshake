@@ -3,10 +3,7 @@ package com.chatshake.chat.chatshake_app.services;
 import com.chatshake.chat.chatshake_app.Dao.ChatRoomDao;
 import com.chatshake.chat.chatshake_app.constants.ENUM;
 import com.chatshake.chat.chatshake_app.dto.*;
-import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
-import com.chatshake.chat.chatshake_app.models.MessageBO;
-import com.chatshake.chat.chatshake_app.models.RoomRequestBO;
-import com.chatshake.chat.chatshake_app.models.UserTempBO;
+import com.chatshake.chat.chatshake_app.models.*;
 import com.chatshake.chat.chatshake_app.repositories.ChatRoomRepository;
 import com.chatshake.chat.chatshake_app.repositories.RoomRequestRepository;
 import com.chatshake.chat.chatshake_app.repositories.UserTempRepository;
@@ -16,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +40,9 @@ public class ChatRoomServiceImpl implements ChatRoomService{
     @Override
     public String roomRequest(RoomRequestTO roomRequest) {
         if(roomRequest != null && roomRequest.getReqTo() != null && roomRequest.getReqFrom() !=null){
+            if(roomRequest.getReqTo().equals(roomRequest.getReqFrom())){
+                return null;
+            }
             List<RoomRequestBO> roomRequests = this.chatRoomDao.findRoomRequests(roomRequest, Arrays.asList(ENUM.REQUEST_TYPE.REJECTED, ENUM.REQUEST_TYPE.DENIED));
             if(roomRequests != null && !roomRequests.isEmpty()){
                 RoomRequestBO currRoomReq = roomRequests.get(0);
@@ -72,6 +73,9 @@ public class ChatRoomServiceImpl implements ChatRoomService{
     @Override
     public String roomRequestAccetance(RoomRequestTO roomRequest, boolean acceptFlag){
         if(roomRequest != null && roomRequest.getReqTo() != null && roomRequest.getReqFrom() !=null){
+            if(roomRequest.getReqTo().equals(roomRequest.getReqFrom())){
+                return null;
+            }
             List<RoomRequestBO> roomRequests = this.chatRoomDao.findRoomRequests(roomRequest, Arrays.asList(ENUM.REQUEST_TYPE.REJECTED, ENUM.REQUEST_TYPE.DENIED));
             if(roomRequests != null && !roomRequests.isEmpty()) {
                 RoomRequestBO currRoomReq = roomRequests.get(0);
@@ -139,8 +143,16 @@ public class ChatRoomServiceImpl implements ChatRoomService{
             chatRoom.setRoomName(roomName);
             chatRoom.setType(type);
             chatRoom.setStatus(ENUM.ROOM_STATUS.ACT);
-            chatRoom.setParticipants(participants);
-            return modelMapper.map(chatRoomRepository.save(chatRoom), ChatRoomTO.class);
+            List<ParticipantBO> pts = new ArrayList<>();
+            participants.forEach(pcId->{
+                ParticipantBO participant = new ParticipantBO();
+                participant.setId(pcId);
+                pts.add(participant);
+            });
+            if(!pts.isEmpty()){
+                chatRoom.setParticipants(pts);
+                return modelMapper.map(chatRoomRepository.save(chatRoom), ChatRoomTO.class);
+            }
         }
         return null;
     }
@@ -171,11 +183,11 @@ public class ChatRoomServiceImpl implements ChatRoomService{
                     List<ChatRoomTO> chatList = this.mapperService.map(searchResp.getDataList(), ChatRoomTO.class) ;
                     if(chatList != null){
                         for (ChatRoomTO chatRoomRow : chatList) {
-                            if(searchReq!=null && searchReq.getParticipant() !=null && chatRoomRow != null && chatRoomRow.getParticipants() != null && chatRoomRow.getType() !=null){
+                            if(searchReq!=null && searchReq.getParticipant() !=null && chatRoomRow != null && chatRoomRow.getParticipants() != null && !chatRoomRow.getParticipants().isEmpty()  && chatRoomRow.getType() !=null){
                                 if(chatRoomRow.getType().equals(ENUM.ROOM_TYPE.CHAT)){
-                                    for (String participant : chatRoomRow.getParticipants()) {
-                                        if(participant!=null && !participant.equals(searchReq.getParticipant())){
-                                            Optional<UserTempBO> member = this.userTempRepository.findById(participant);
+                                    for (ParticipantTO participant : chatRoomRow.getParticipants()) {
+                                        if(participant!=null && participant.getId() !=null && !participant.getId().equals(searchReq.getParticipant())){
+                                            Optional<UserTempBO> member = this.userTempRepository.findById(participant.getId());
                                             if(member.isPresent()){
                                                 if(member.get().getName() !=null){
                                                     chatRoomRow.setRoomName(member.get().getName());
@@ -242,6 +254,32 @@ public class ChatRoomServiceImpl implements ChatRoomService{
             if(messageReturn!=null){
                 return this.mapperService.map(messageReturn, MessageRequestTO.class);
             }
+        }
+        return null;
+    }
+
+    @Override
+    public ChatRoomTO chatRoomById(String roomId) {
+        Optional<ChatRoomBO> chatRoom = this.chatRoomRepository.findById(roomId);
+        if(chatRoom.isPresent()){
+            ChatRoomTO chatRoomTO = mapperService.map(chatRoom, ChatRoomTO.class);
+            if(chatRoomTO !=null && chatRoomTO.getParticipants() !=null && !chatRoomTO.getParticipants().isEmpty()){
+                chatRoomTO.getParticipants().forEach(pts->{
+                    if(pts.getId() !=null){
+                        Optional<UserTempBO> member = this.userTempRepository.findById(pts.getId());
+                        if(member.isPresent()){
+                            if(member.get().getName() !=null){
+                                pts.setLabel(member.get().getName());
+                            } else if(member.get().getUsername() !=null){
+                                pts.setLabel(member.get().getUsername());
+                            } else {
+                                pts.setLabel("Unknown");
+                            }
+                        }
+                    }
+                });
+            }
+            return chatRoomTO;
         }
         return null;
     }

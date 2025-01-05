@@ -7,7 +7,6 @@ import com.chatshake.chat.chatshake_app.dto.SearchRespTO;
 import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
 import com.chatshake.chat.chatshake_app.models.MessageBO;
 import com.chatshake.chat.chatshake_app.models.RoomRequestBO;
-import com.chatshake.chat.chatshake_app.models.UserTempBO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +62,7 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
                 Query countQuery = Query.of(query).limit(-1).skip(-1); // Reset skip/limit for accurate count
                 long total = mongoTemplate.count(countQuery, RoomRequestBO.class);
                 searchResReturn.setTotalRow(total);
+                searchResReturn.setPageCount(searchReq.getPage());
             }
             searchResReturn.setDataList(requests);
         }
@@ -73,12 +73,14 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
     public List<ChatRoomBO> findRooms(String participant, ENUM.ROOM_TYPE type, ENUM.ROOM_STATUS status) {
         if(participant !=null){
             Query query = new Query();
-            query.addCriteria(Criteria.where("participants").is(participant));
+            query.addCriteria(Criteria.where("participants.id").is(participant));
             if(type !=null){
                 query.addCriteria(Criteria.where("type").is(type));
             }
             if(status !=null){
                 query.addCriteria(Criteria.where("status").is(status));
+            } else {
+                query.addCriteria(Criteria.where("status").nin(ENUM.ROOM_STATUS.DEL));
             }
             return mongoTemplate.find(query, ChatRoomBO.class);
         }
@@ -94,13 +96,15 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
                 query.addCriteria(Criteria.where("roomName").regex(".*" + searchReq.getLabel() + ".*", "i"));
             }
             if(searchReq.getParticipant() !=null){
-                query.addCriteria(Criteria.where("participants").is(searchReq.getParticipant()));
+                query.addCriteria(Criteria.where("participants.id").is(searchReq.getParticipant()));
             }
-            if(searchReq.getType() !=null){
+            if(searchReq.getType() !=null && !searchReq.getType().toString().trim().isEmpty()){
                 query.addCriteria(Criteria.where("type").is(searchReq.getType()));
             }
             if(searchReq.getStatus() !=null){
                 query.addCriteria(Criteria.where("status").is(searchReq.getStatus()));
+            } else {
+                query.addCriteria(Criteria.where("status").nin(ENUM.ROOM_STATUS.DEL));
             }
             Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "updatedDate"));
             query.with(pageable);
@@ -109,6 +113,7 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
                 Query countQuery = Query.of(query).limit(-1).skip(-1); // Reset skip/limit for accurate count
                 long total = mongoTemplate.count(countQuery, ChatRoomBO.class);
                 searchResReturn.setTotalRow(total);
+                searchResReturn.setPageCount(searchReq.getPage());
             }
             searchResReturn.setDataList(rooms);
         }
@@ -121,6 +126,15 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
         if(searchReq !=null && searchReq.getRoomId() !=null){
             Query query = new Query();
             query.addCriteria(Criteria.where("roomId").is(searchReq.getRoomId()));
+//            query.addCriteria(Criteria.where("content").ne(null).andOperator(
+//                    Criteria.where("content").ne("")).andOperator(
+//                    Criteria.where("content").exists(true)));
+            query.addCriteria(new Criteria().andOperator(
+                    Criteria.where("content").ne(null),
+                    Criteria.where("content").ne(""),
+                    Criteria.where("content").exists(true)
+            ));
+
             Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "updatedDate"));
             query.with(pageable);
             List<MessageBO> messages =  mongoTemplate.find(query, MessageBO.class);
@@ -128,6 +142,7 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
                 Query countQuery = Query.of(query).limit(-1).skip(-1); // Reset skip/limit for accurate count
                 long total = mongoTemplate.count(countQuery, MessageBO.class);
                 searchResReturn.setTotalRow(total);
+                searchResReturn.setPageCount(searchReq.getPage());
             }
             searchResReturn.setDataList(messages);
         }

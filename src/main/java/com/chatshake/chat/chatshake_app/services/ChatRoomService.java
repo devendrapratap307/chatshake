@@ -20,6 +20,8 @@ public interface ChatRoomService {
 
     MessageRequestTO saveOrUpdateMessage(MessageRequestTO msg);
 
+    ChatRoomTO chatRoomById(String roomId);
+
 
 
 }

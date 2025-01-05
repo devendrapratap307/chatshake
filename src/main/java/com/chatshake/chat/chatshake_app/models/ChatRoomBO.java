@@ -18,8 +18,6 @@ public class ChatRoomBO extends AuditBO {
     private String roomName;
     private ENUM.ROOM_TYPE type;
     private ENUM.ROOM_STATUS status;
-    private List<String> participants;
-    private List<String> admins;
-
-//    private List<User> members;
+    private List<ParticipantBO> participants;
+    private boolean onlyAdmin;
 }

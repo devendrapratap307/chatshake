@@ -2,7 +2,6 @@ package com.chatshake.chat.chatshake_app.controllers;
 
 import com.chatshake.chat.chatshake_app.constants.MSG_CONST;
 import com.chatshake.chat.chatshake_app.dto.*;
-import com.chatshake.chat.chatshake_app.models.MessageBO;
 import com.chatshake.chat.chatshake_app.repositories.ChatRoomRepository;
 import com.chatshake.chat.chatshake_app.services.ChatRoomService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,8 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -29,27 +26,6 @@ public class RoomController {
     public RoomController(ChatRoomRepository roomRepository){
         this.roomRepository = roomRepository;
     }
-//
-//    @PostMapping
-//    public ResponseEntity<?> createChatRoom (@RequestBody String roomId) {
-//        if(roomRepository.findByRoomId(roomId) != null){
-//            return ResponseEntity.badRequest().body("Chat Room already exists !");
-//        }
-//        ChatRoomBO room = new ChatRoomBO();
-//        room.setRoomId(roomId);
-//        ChatRoomBO savedChatRoom = roomRepository.save(room);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(room);
-//    }
-//
-//    @GetMapping("/{roomId}")
-//    public ResponseEntity<?> joinRoom(@PathVariable String  roomId){
-//        ChatRoomBO room = roomRepository.findByRoomId(roomId);
-//        if(room == null){
-//            return ResponseEntity.badRequest().body("Chat Room not found !!");
-//        }
-//        return ResponseEntity.ok(room);
-//    }
-//
     @GetMapping("/messages/{roomId}")
     public ResponseEntity<?> getMessages(@PathVariable String roomId,
                                                        @RequestParam(value ="page", defaultValue = "0", required = false) int page,
@@ -59,7 +35,7 @@ public class RoomController {
         searchReq.setPage(page);
         searchReq.setLimit(size);
         SearchRespTO searchResp = this.roomService.searchMessages(searchReq, true);
-        resp = ResponseTO.build(200, "M001","/room-request/search", "roomRequest", searchResp);
+        resp = ResponseTO.build(200, "M001","/messages/", "roomMessage", searchResp);
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }
 // new changes
@@ -101,6 +77,18 @@ public class RoomController {
     @PostMapping("/room/add")
     public ResponseEntity<?> addChatRoom(@RequestBody ChatRoomTO chatRoom, Errors result, HttpServletRequest request) {
         resp = ResponseTO.build(200, "M001","/room/add", "chatRoom", this.roomService.createChatRoom(chatRoom));
+        return new ResponseEntity<>(resp,HttpStatus.CREATED);
+    }
+
+    @GetMapping("/room/{roomId}")
+    public ResponseEntity<?> getChatRoomById(@PathVariable String roomId){
+        resp = ResponseTO.build(200, "M001","/room/{roomId}", "chatRoom", this.roomService.chatRoomById(roomId));
+        return new ResponseEntity<>(resp, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/room/update")
+    public ResponseEntity<?> updateChatRoom(@RequestBody ChatRoomTO chatRoom, Errors result, HttpServletRequest request) {
+        resp = ResponseTO.build(200, "M001","/room/update", "chatRoom", this.roomService.createChatRoom(chatRoom));
         return new ResponseEntity<>(resp,HttpStatus.CREATED);
     }
 }
