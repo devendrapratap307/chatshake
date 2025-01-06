@@ -135,7 +135,7 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
                     Criteria.where("content").exists(true)
             ));
 
-            Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "updatedDate"));
+            Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "timeStamp"));
             query.with(pageable);
             List<MessageBO> messages =  mongoTemplate.find(query, MessageBO.class);
             if(pageFlag){
