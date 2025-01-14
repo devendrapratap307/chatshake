@@ -55,7 +55,7 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
                 query.addCriteria(Criteria.where("reqFrom").is(searchReq.getParticipant()));
             }
             query.addCriteria(Criteria.where("status").nin(Arrays.asList(ENUM.REQUEST_TYPE.ACCEPTED, ENUM.REQUEST_TYPE.DENIED, ENUM.REQUEST_TYPE.REJECTED)));
-            Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "id"));
+            Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.DESC, "id"));
             query.with(pageable);
             List<RoomRequestBO> requests =  mongoTemplate.find(query, RoomRequestBO.class);
             if(pageFlag){
@@ -106,7 +106,7 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
             } else {
                 query.addCriteria(Criteria.where("status").nin(ENUM.ROOM_STATUS.DEL));
             }
-            Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "updatedDate"));
+            Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.DESC, "updatedDate"));
             query.with(pageable);
             List<ChatRoomBO> rooms =  mongoTemplate.find(query, ChatRoomBO.class);
             if(pageFlag){
@@ -135,7 +135,7 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
                     Criteria.where("content").exists(true)
             ));
 
-            Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.ASC, "timeStamp"));
+            Pageable pageable = PageRequest.of(searchReq.getPage(), searchReq.getLimit(), Sort.by(Sort.Direction.DESC, "timeStamp"));
             query.with(pageable);
             List<MessageBO> messages =  mongoTemplate.find(query, MessageBO.class);
             if(pageFlag){

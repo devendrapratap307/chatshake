@@ -7,19 +7,21 @@ import com.chatshake.chat.chatshake_app.models.*;
 import com.chatshake.chat.chatshake_app.repositories.ChatRoomRepository;
 import com.chatshake.chat.chatshake_app.repositories.RoomRequestRepository;
 import com.chatshake.chat.chatshake_app.repositories.UserTempRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Transactional
+@Slf4j
 public class ChatRoomServiceImpl implements ChatRoomService{
     @Autowired
     private ChatRoomDao chatRoomDao;
@@ -37,6 +39,16 @@ public class ChatRoomServiceImpl implements ChatRoomService{
 
     @Autowired
     private MapperService mapperService;
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+    private final SimpMessageSendingOperations simpMessageSendingOperations;
+
+    public ChatRoomServiceImpl(SimpMessageSendingOperations simpMessageSendingOperations) {
+        this.simpMessageSendingOperations = simpMessageSendingOperations;
+    }
+
     @Override
     public String roomRequest(RoomRequestTO roomRequest) {
         if(roomRequest != null && roomRequest.getReqTo() != null && roomRequest.getReqFrom() !=null){
@@ -225,11 +237,36 @@ public class ChatRoomServiceImpl implements ChatRoomService{
     @Override
     public SearchRespTO searchMessages(SearchReqTO searchReq, boolean pageFlag) {
         if(searchReq != null){
+            HashMap<String, String> memberNameMap = new HashMap<>();
             SearchRespTO searchResp = this.chatRoomDao.searchMessages(searchReq, pageFlag);
             if(searchResp !=null){
                 if( searchResp.getDataList() !=null){
                     List<MessageRequestTO> msgList = this.mapperService.map(searchResp.getDataList(), MessageRequestTO.class) ;
                     if(msgList != null && !msgList.isEmpty()){
+                        msgList.forEach(msg->{
+                            if(msg.getSender() != null){
+                                if(memberNameMap.containsKey(msg.getSender())){
+                                    msg.setSenderName(memberNameMap.get(msg.getSender()));
+                                } else {
+                                    Optional<UserTempBO> member = this.userTempRepository.findById(msg.getSender());
+                                    if(member.isPresent()){
+                                        if(member.get().getName() !=null){
+                                            msg.setSenderName(member.get().getName());
+                                            memberNameMap.put(msg.getSender(), member.get().getName());
+                                        } else if(member.get().getUsername() !=null){
+                                            msg.setSenderName(member.get().getUsername());
+                                            memberNameMap.put(msg.getSender(), member.get().getUsername());
+                                        } else {
+                                            msg.setSenderName("Unknown");
+                                            memberNameMap.put(msg.getSender(), "Unknown");
+                                        }
+                                    } else {
+                                        msg.setSenderName("Unknown");
+                                        memberNameMap.put(msg.getSender(), "Unknown");
+                                    }
+                                }
+                            }
+                        });
                         searchResp.setDataList(msgList);
                     }
                 }
@@ -282,5 +319,29 @@ public class ChatRoomServiceImpl implements ChatRoomService{
             return chatRoomTO;
         }
         return null;
+    }
+
+    @Override
+    public void userConnection(String userId) {
+        if (userId != null) {
+            redisTemplate.opsForValue().set("user-online:" + userId, "true");
+            messagingTemplate.convertAndSend("/topic/online-status/" + userId, new OnlineStatusTO(userId, true));
+            sendPendingNotifications(userId);
+        } else {
+            log.error("User ID is null in userConnection");
+        }
+    }
+
+    private void sendPendingNotifications(String userId) {
+        List<String> pendingMessages = redisTemplate.opsForList().range("offline-queue:" + userId, 0, -1);
+        if (pendingMessages != null && !pendingMessages.isEmpty()) {
+            pendingMessages.forEach(message -> {
+                // Send notification to user's WebSocket channel
+                messagingTemplate.convertAndSend("/topic/private/" + userId, message);
+            });
+
+            // Clear the offline queue for the user
+            redisTemplate.delete("offline-queue:" + userId);
+        }
     }
 }

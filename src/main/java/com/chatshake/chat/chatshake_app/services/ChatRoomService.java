@@ -22,6 +22,8 @@ public interface ChatRoomService {
 
     ChatRoomTO chatRoomById(String roomId);
 
+    void userConnection(String userId);
+
 
 
 }

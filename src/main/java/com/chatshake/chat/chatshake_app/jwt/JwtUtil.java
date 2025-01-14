@@ -50,5 +50,18 @@ public class JwtUtil {
                 .getExpiration()
                 .before(new Date());
     }
+    public String validateTokenAndGetUserId(String token) {
+        try {
+            return (String) Jwts.parser()
+                    .setSigningKey(SECRET_KEY)
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("userId");
+        } catch (Exception e) {
+            // Handle token validation failure (e.g., token expired, invalid signature)
+            throw new RuntimeException("Invalid JWT token");
+        }
+    }
+
 }
 

@@ -2,20 +2,23 @@ package com.chatshake.chat.chatshake_app.controllers;
 
 import com.chatshake.chat.chatshake_app.dto.MessageRequestTO;
 import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
-import com.chatshake.chat.chatshake_app.models.MessageBO;
 import com.chatshake.chat.chatshake_app.repositories.ChatRoomRepository;
 import com.chatshake.chat.chatshake_app.services.ChatRoomService;
+import com.chatshake.chat.chatshake_app.services.RedisStreamService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+
+import static io.lettuce.core.pubsub.PubSubOutput.Type.message;
 
 @Controller
 public class ChatController {
@@ -24,51 +27,72 @@ public class ChatController {
 
     @Autowired
     private ChatRoomService roomService;
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
-    public ChatController(ChatRoomRepository roomRepository) {
+    @Autowired
+    private RedisStreamService redisStreamService;
+
+    @Autowired
+    private final ObjectMapper objectMapper;
+
+    public ChatController(ChatRoomRepository roomRepository, ObjectMapper objectMapper) {
         this.roomRepository = roomRepository;
+        this.objectMapper = objectMapper;
     }
 
-
-//    @MessageMapping("/sendMessage/{roomId}")
-//    @SendTo("/topic/room/{roomId}")
-//    public MessageBO sendMessage(@DestinationVariable String roomId, @RequestBody MessageRequestTO request){
-//        ChatRoomBO room = roomRepository.findByRoomId(request.getRoomId());
-//
-//        MessageBO message = new MessageBO();
-//        message.setContent(request.getContent());
-//        message.setSender(request.getSender());
-//        message.setTimeStamp(LocalDateTime.now());
-//
-//        if(room != null){
-//            room.getMessages().add(message);
-//            roomRepository.save(room);
-//        } else {
-//            throw new RuntimeException("Chat Room not found");
-//        }
-//        return message;
-//    }
+    @MessageMapping("/connect")
+    public void handleWebSocketConnect(SimpMessageHeaderAccessor headerAccessor) {
+        String userId = (String) headerAccessor.getSessionAttributes().get("userId");
+        if (userId != null) {
+            this.roomService.userConnection(userId);
+        } else {
+            System.out.println("User ID is not available in the session.");
+        }
+    }
 
     @MessageMapping("chat.sendMessage/{roomId}")
     @SendTo("/topic/public/{roomId}")
     public MessageRequestTO sendMessage(@DestinationVariable String roomId, @Payload MessageRequestTO msg, SimpMessageHeaderAccessor headerAccessor){
         headerAccessor.getSessionAttributes().put("sender", msg.getSender());
         headerAccessor.getSessionAttributes().put("roomId", msg.getRoomId());
-        System.out.println("Sender: "+msg.getSender()+" --- content: "+msg.getContent());
+//        System.out.println("Sender: "+msg.getSender()+" --- content: "+msg.getContent());
+        msg.setTimeStamp(LocalDateTime.now());
+        redisStreamService.addMessageToStream("chat-stream", msg);
         Optional<ChatRoomBO> room = roomRepository.findById(roomId);
-        MessageRequestTO message = null;
         if(room.isPresent()){
-            message = this.roomService.saveOrUpdateMessage(msg);
+            if(room.get().getParticipants()!=null && !room.get().getParticipants().isEmpty()){
+                room.get().getParticipants().forEach(ptsRow->{
+                    if(ptsRow.getId() != null && msg.getSender() != null && !ptsRow.getId().equals(msg.getSender())){
+//                        boolean isOnline = Boolean.TRUE.equals(redisTemplate.opsForValue().get("user-online:" + ptsRow.getId()));
+                        String valueReturn = (String) redisTemplate.opsForValue().get("user-online:" + ptsRow.getId());
+                        boolean isOnline = valueReturn != null && "true".equals(valueReturn);
+                        if (!isOnline) {
+                            String jsonMessage = null;
+                            try {
+                                jsonMessage = objectMapper.writeValueAsString(msg);
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
+                            redisTemplate.opsForList().leftPush("offline-queue:" + ptsRow.getId(), jsonMessage);
+                        } else {
+                            messagingTemplate.convertAndSend("/topic/private/" +ptsRow.getId(), msg);
+                        }
+                    }
+                });
+            }
         } else {
             throw new RuntimeException("Chat Room not found");
         }
-        return message;
+        return msg;
     }
 
     @MessageMapping("chat.addUser")
     @SendTo("/topic/chat")
     public MessageRequestTO addUser(@Payload MessageRequestTO msg, SimpMessageHeaderAccessor headerAccessor){
-        headerAccessor.getSessionAttributes().put("username", msg.getSender());
+        headerAccessor.getSessionAttributes().put("userId", msg.getSender());
         System.out.println("User joined: "+msg.getSender());
         return msg;
     }

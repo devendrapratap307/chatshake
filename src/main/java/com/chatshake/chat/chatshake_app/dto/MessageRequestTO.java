@@ -18,4 +18,6 @@ public class MessageRequestTO {
     private ENUM.MESSAGE_TYPE type;
     private ENUM.MESSAGE_STATUS status;
     private LocalDateTime timeStamp;
+
+    private String senderName;
 }
