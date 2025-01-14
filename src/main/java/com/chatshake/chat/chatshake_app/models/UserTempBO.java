@@ -5,16 +5,12 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.List;
-
 @Getter
 @Setter
-@Document(collection = "room_request")
-public class RoomRequest {
+@Document(collection = "users")
+public class UserTempBO {
     @Id
     private String id;
-    private String reqFrom;
-
-    private String reqTo;
-    private boolean accepted;
+    private String username;
+    private String name;
 }

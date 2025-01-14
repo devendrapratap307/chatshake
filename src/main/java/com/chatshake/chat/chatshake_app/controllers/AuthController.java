@@ -1,13 +1,10 @@
 package com.chatshake.chat.chatshake_app.controllers;
 
-import com.chatshake.chat.chatshake_app.dto.UserTO;
-import com.chatshake.chat.chatshake_app.models.User;
+import com.chatshake.chat.chatshake_app.dto.*;
 import com.chatshake.chat.chatshake_app.repositories.UserRepository;
 import com.chatshake.chat.chatshake_app.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.bind.validation.ValidationErrors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,7 +16,7 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin("*")
+@CrossOrigin("http://localhost:4200")
 public class AuthController {
 
     @Autowired
@@ -28,14 +25,15 @@ public class AuthController {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private ModelMapper modelMapper;
+
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
     private Validator userValidator;
+
+    private ResponseTO resp;
 
     @PostMapping("/login")
     public HashMap<String, String> login(@RequestParam String username, @RequestParam String password) {
@@ -48,13 +46,18 @@ public class AuthController {
             userValidator.validate(user,result);
         }
         if (result.hasErrors()) {
-//            ValidationErrors validationError = ;// need to create responseTO
-            return new ResponseEntity<>(result.getFieldError(), HttpStatus.OK);
+            ErrorRespTO errorResp = ErrorRespTO.buildError(result);
+            return new ResponseEntity<>(errorResp, HttpStatus.OK);
         }
-        String encryptedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encryptedPassword);
-        User userReturn = userRepository.save(this.modelMapper.map(user, User.class));
-        return new ResponseEntity<>(userReturn,HttpStatus.CREATED);
+        resp = ResponseTO.build(200, "M001","/user/add", "user", this.authService.saveUser(user));
+        return new ResponseEntity<>(resp,HttpStatus.CREATED);
+    }
+
+    @PostMapping("/user/search")
+    public ResponseEntity<?> searchUser(@RequestBody SearchReqTO searchReqTO, @RequestParam(value = "pageFlag", required = false) final boolean pageFlag, Errors result, HttpServletRequest request) {
+        SearchRespTO searchResp = this.authService.searchUser(searchReqTO, pageFlag);
+        resp = ResponseTO.build(200, "M001","/user/search", "user", searchResp);
+        return new ResponseEntity<>(resp,HttpStatus.CREATED);
     }
 }
 

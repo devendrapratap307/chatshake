@@ -6,18 +6,13 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Getter
 @Setter
-@Document(collection = "room")
-public class ChatRoomBO extends AuditBO {
+@Document(collection = "room_request")
+public class RoomRequestBO {
     @Id
     private String id;
-    private String roomName;
-    private ENUM.ROOM_TYPE type;
-    private ENUM.ROOM_STATUS status;
-    private List<ParticipantBO> participants;
-    private boolean onlyAdmin;
+    private String reqFrom;
+    private String reqTo;
+    private ENUM.REQUEST_TYPE status;
 }
