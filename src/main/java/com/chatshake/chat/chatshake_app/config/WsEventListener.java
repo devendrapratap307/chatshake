@@ -78,7 +78,8 @@ public class WsEventListener {
         if(userId != null){
             System.out.println("###################################SessionDisconnectEvent - user-online: " + userId);
             log.info("SessionDisconnectEvent - user-online: " + userId);
-            messagingTemplate.convertAndSend("/topic/online-status/"+userId  , new OnlineStatusTO(userId, false));
+            OnlineStatusTO onlineStatus =  new OnlineStatusTO(userId, false);
+            messagingTemplate.convertAndSend("/topic/online-status/"+userId, onlineStatus);
             redisTemplate.delete("user-online:" + userId);
         }
     }

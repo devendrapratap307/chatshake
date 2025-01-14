@@ -325,7 +325,8 @@ public class ChatRoomServiceImpl implements ChatRoomService{
     public void userConnection(String userId) {
         if (userId != null) {
             redisTemplate.opsForValue().set("user-online:" + userId, "true");
-            messagingTemplate.convertAndSend("/topic/online-status/" + userId, new OnlineStatusTO(userId, true));
+            OnlineStatusTO onlineStatus =  new OnlineStatusTO(userId, true);
+            messagingTemplate.convertAndSend("/topic/online-status/" + userId, onlineStatus);
             sendPendingNotifications(userId);
         } else {
             log.error("User ID is null in userConnection");
