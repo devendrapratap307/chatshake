@@ -1,7 +1,10 @@
 package com.chatshake.chat.chatshake_app.jwt;
 
+import com.chatshake.chat.chatshake_app.config.UserContext;
+import com.chatshake.chat.chatshake_app.dto.UserTO;
 import com.chatshake.chat.chatshake_app.models.User;
 import com.chatshake.chat.chatshake_app.repositories.UserRepository;
+import com.chatshake.chat.chatshake_app.services.MapperService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +27,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private MapperService mapperService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -40,8 +45,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             User user = userRepository.findByUsername(username);
-
             if (jwtUtil.validateToken(jwt, username)) {
+                UserContext.setCurrentUser(this.mapperService.map(user, UserTO.class));
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
