@@ -14,7 +14,7 @@ import java.util.HashMap;
 
 
 public interface AuthService {
-    HashMap<String, String> authenticate(String username, String password);
+    String authenticate(String username, String password);
     SearchRespTO searchUser(SearchReqTO searchReq, boolean pageFlag);
     UserTO saveUser(UserTO user);
 

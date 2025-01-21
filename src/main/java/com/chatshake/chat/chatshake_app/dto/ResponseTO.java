@@ -26,6 +26,15 @@ public class ResponseTO {
         response.putData(key, data);
         return response;
     }
+    public static ResponseTO buildWithMsg(int status, String code, String path, String msg, String key, Object data) {
+        ResponseTO response = new ResponseTO();
+        response.setStatus(status);
+        response.setPath(path);
+        response.setMessage(msg);
+        response.setCode(code);
+        response.putData(key, data);
+        return response;
+    }
 
     public void putData(String key, Object Value) {
         data.put(key, Value);
