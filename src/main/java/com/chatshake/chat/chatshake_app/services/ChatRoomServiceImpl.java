@@ -195,7 +195,7 @@ public class ChatRoomServiceImpl implements ChatRoomService{
                     List<ChatRoomTO> chatList = this.mapperService.map(searchResp.getDataList(), ChatRoomTO.class) ;
                     if(chatList != null){
                         for (ChatRoomTO chatRoomRow : chatList) {
-                            if(searchReq!=null && searchReq.getParticipant() !=null && chatRoomRow != null && chatRoomRow.getParticipants() != null && !chatRoomRow.getParticipants().isEmpty()  && chatRoomRow.getType() !=null){
+                            if(searchReq.getParticipant() != null && chatRoomRow != null && chatRoomRow.getParticipants() != null && !chatRoomRow.getParticipants().isEmpty() && chatRoomRow.getType() != null){
                                 if(chatRoomRow.getType().equals(ENUM.ROOM_TYPE.CHAT)){
                                     for (ParticipantTO participant : chatRoomRow.getParticipants()) {
                                         if(participant!=null && participant.getId() !=null && !participant.getId().equals(searchReq.getParticipant())){
