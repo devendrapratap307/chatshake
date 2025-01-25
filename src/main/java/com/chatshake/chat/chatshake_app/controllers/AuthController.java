@@ -36,8 +36,9 @@ public class AuthController {
     private ResponseTO resp;
 
     @PostMapping("/login")
-    public HashMap<String, String> login(@RequestParam String username, @RequestParam String password) {
-        return authService.authenticate(username, password);
+    public ResponseEntity<?>  login(@RequestParam String username, @RequestParam String password) {
+        resp = ResponseTO.build(200, "M001","/login", "token", authService.authenticate(username, password));
+        return new ResponseEntity<>(resp,HttpStatus.CREATED);
     }
 
     @PostMapping("/user/add")

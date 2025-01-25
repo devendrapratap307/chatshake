@@ -195,7 +195,7 @@ public class ChatRoomServiceImpl implements ChatRoomService{
                     List<ChatRoomTO> chatList = this.mapperService.map(searchResp.getDataList(), ChatRoomTO.class) ;
                     if(chatList != null){
                         for (ChatRoomTO chatRoomRow : chatList) {
-                            if(searchReq!=null && searchReq.getParticipant() !=null && chatRoomRow != null && chatRoomRow.getParticipants() != null && !chatRoomRow.getParticipants().isEmpty()  && chatRoomRow.getType() !=null){
+                            if(searchReq.getParticipant() != null && chatRoomRow != null && chatRoomRow.getParticipants() != null && !chatRoomRow.getParticipants().isEmpty() && chatRoomRow.getType() != null){
                                 if(chatRoomRow.getType().equals(ENUM.ROOM_TYPE.CHAT)){
                                     for (ParticipantTO participant : chatRoomRow.getParticipants()) {
                                         if(participant!=null && participant.getId() !=null && !participant.getId().equals(searchReq.getParticipant())){
@@ -325,7 +325,8 @@ public class ChatRoomServiceImpl implements ChatRoomService{
     public void userConnection(String userId) {
         if (userId != null) {
             redisTemplate.opsForValue().set("user-online:" + userId, "true");
-            messagingTemplate.convertAndSend("/topic/online-status/" + userId, new OnlineStatusTO(userId, true));
+            OnlineStatusTO onlineStatus =  new OnlineStatusTO(userId, true);
+            messagingTemplate.convertAndSend("/topic/online-status/" + userId, onlineStatus);
             sendPendingNotifications(userId);
         } else {
             log.error("User ID is null in userConnection");

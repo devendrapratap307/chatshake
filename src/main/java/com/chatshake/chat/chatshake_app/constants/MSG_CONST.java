@@ -6,6 +6,7 @@ import java.util.Map;
 public class MSG_CONST {
     public static final Map<String, String> MSG = new HashMap<>();
     static {
+        MSG.put("EX001", "Oops! Something didn’t go as planned.");
         // ALERT
         MSG.put("M001", "created");
         MSG.put("M002", "updated");

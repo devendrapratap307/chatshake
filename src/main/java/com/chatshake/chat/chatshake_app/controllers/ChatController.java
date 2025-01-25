@@ -1,5 +1,6 @@
 package com.chatshake.chat.chatshake_app.controllers;
 
+import com.chatshake.chat.chatshake_app.constants.ENUM;
 import com.chatshake.chat.chatshake_app.dto.MessageRequestTO;
 import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
 import com.chatshake.chat.chatshake_app.repositories.ChatRoomRepository;
@@ -60,13 +61,12 @@ public class ChatController {
         headerAccessor.getSessionAttributes().put("roomId", msg.getRoomId());
 //        System.out.println("Sender: "+msg.getSender()+" --- content: "+msg.getContent());
         msg.setTimeStamp(LocalDateTime.now());
-        redisStreamService.addMessageToStream("chat-stream", msg);
         Optional<ChatRoomBO> room = roomRepository.findById(roomId);
-        if(room.isPresent()){
+        if(room.isPresent() && room.get().getStatus() != null && !room.get().getStatus().equals(ENUM.ROOM_STATUS.BLOCK)){
+            redisStreamService.addMessageToStream("chat-stream", msg);
             if(room.get().getParticipants()!=null && !room.get().getParticipants().isEmpty()){
                 room.get().getParticipants().forEach(ptsRow->{
                     if(ptsRow.getId() != null && msg.getSender() != null && !ptsRow.getId().equals(msg.getSender())){
-//                        boolean isOnline = Boolean.TRUE.equals(redisTemplate.opsForValue().get("user-online:" + ptsRow.getId()));
                         String valueReturn = (String) redisTemplate.opsForValue().get("user-online:" + ptsRow.getId());
                         boolean isOnline = valueReturn != null && "true".equals(valueReturn);
                         if (!isOnline) {
@@ -84,7 +84,7 @@ public class ChatController {
                 });
             }
         } else {
-            throw new RuntimeException("Chat Room not found");
+            throw new RuntimeException("Chat blocked or not found");
         }
         return msg;
     }
