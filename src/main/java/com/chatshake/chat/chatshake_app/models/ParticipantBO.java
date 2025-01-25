@@ -8,5 +8,6 @@ import lombok.Setter;
 public class ParticipantBO {
     private String id;
     private boolean adminFlag;
+    private boolean blockFlag;
 
 }
