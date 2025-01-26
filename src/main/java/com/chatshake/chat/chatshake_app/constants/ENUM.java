@@ -14,7 +14,10 @@ public class ENUM {
         ACT, DEL, EDIT
     }
     public enum MESSAGE_TYPE {
-        JOIN, LEAVE, CHAT
+        JOIN, LEAVE, CHAT, OUTLAY
+    }
+    public enum SPLIT_TYPE {
+        EQUAL, PERCENT, CUSTOM
     }
 
 }

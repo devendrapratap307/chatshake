@@ -56,7 +56,6 @@ public class RedisStreamConsumer {
                         .opsForStream()
                         .read(StreamReadOptions.empty().count(READ_COUNT).block(BLOCK_TIMEOUT),
                                 StreamOffset.latest(STREAM_NAME));
-
                 if (messages != null && !messages.isEmpty()) {
                     messages.forEach(this::processMessage);
                 }
@@ -70,17 +69,12 @@ public class RedisStreamConsumer {
         try {
             String jsonMessage = record.getValue().toString();
             log.info("Received JSON message: {}", jsonMessage);
-
-            // Fix malformed JSON
             jsonMessage = fixMalformedJson(jsonMessage);
-
             // Parse the JSON
             Map<String, Object> messageMap = objectMapper.readValue(jsonMessage, Map.class);
             Map<String, Object> payload = (Map<String, Object>) messageMap.get("payload");
             MessageRequestTO chatMessage = objectMapper.convertValue(payload, MessageRequestTO.class);
-
             log.info("Processed chat message: {}", chatMessage);
-
             // Process or save the chat message
             roomService.saveOrUpdateMessage(chatMessage);
         } catch (Exception e) {

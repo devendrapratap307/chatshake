@@ -286,10 +286,17 @@ public class ChatRoomServiceImpl implements ChatRoomService{
 //            message.setType(msg.getType());
 //            message.setStatus(msg.getStatus());
 //            message.setTimeStamp(LocalDateTime.now());
-            msg.setTimeStamp(LocalDateTime.now());
-            MessageBO messageReturn = this.chatRoomDao.saveOrUpdateMessage(this.mapperService.map(msg, MessageBO.class));
-            if(messageReturn!=null){
-                return this.mapperService.map(messageReturn, MessageRequestTO.class);
+//            msg.setTimeStamp(LocalDateTime.now());
+            if(msg.getType() !=null && msg.getType().equals(ENUM.MESSAGE_TYPE.OUTLAY)){
+                OutlayMemberBO outlayReturn = this.chatRoomDao.saveOrUpdateOutlay(this.mapperService.map(msg, OutlayMemberBO.class));
+                if(outlayReturn!=null){
+                    return this.mapperService.map(outlayReturn, MessageRequestTO.class);
+                }
+            } else {
+                MessageBO messageReturn = this.chatRoomDao.saveOrUpdateMessage(this.mapperService.map(msg, MessageBO.class));
+                if(messageReturn!=null){
+                    return this.mapperService.map(messageReturn, MessageRequestTO.class);
+                }
             }
         }
         return null;

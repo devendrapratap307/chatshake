@@ -6,6 +6,7 @@ import com.chatshake.chat.chatshake_app.dto.SearchReqTO;
 import com.chatshake.chat.chatshake_app.dto.SearchRespTO;
 import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
 import com.chatshake.chat.chatshake_app.models.MessageBO;
+import com.chatshake.chat.chatshake_app.models.OutlayMemberBO;
 import com.chatshake.chat.chatshake_app.models.RoomRequestBO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -126,6 +127,8 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
         if(searchReq !=null && searchReq.getRoomId() !=null){
             Query query = new Query();
             query.addCriteria(Criteria.where("roomId").is(searchReq.getRoomId()));
+            query.addCriteria(Criteria.where("type").ne(ENUM.MESSAGE_TYPE.OUTLAY));
+
 //            query.addCriteria(Criteria.where("content").ne(null).andOperator(
 //                    Criteria.where("content").ne("")).andOperator(
 //                    Criteria.where("content").exists(true)));
@@ -152,6 +155,11 @@ public class ChatRoomDaoImpl implements ChatRoomDao{
     @Override
     public MessageBO saveOrUpdateMessage(MessageBO message) {
         return mongoTemplate.save(message);
+    }
+
+    @Override
+    public OutlayMemberBO saveOrUpdateOutlay(OutlayMemberBO outlayMsg) {
+        return mongoTemplate.save(outlayMsg);
     }
 
 }

@@ -6,6 +6,7 @@ import com.chatshake.chat.chatshake_app.dto.SearchReqTO;
 import com.chatshake.chat.chatshake_app.dto.SearchRespTO;
 import com.chatshake.chat.chatshake_app.models.ChatRoomBO;
 import com.chatshake.chat.chatshake_app.models.MessageBO;
+import com.chatshake.chat.chatshake_app.models.OutlayMemberBO;
 import com.chatshake.chat.chatshake_app.models.RoomRequestBO;
 
 import java.util.List;
@@ -18,5 +19,6 @@ public interface ChatRoomDao {
     SearchRespTO searchMessages(SearchReqTO searchReq, boolean pageFlag);
 
     MessageBO saveOrUpdateMessage(MessageBO message);
+    OutlayMemberBO saveOrUpdateOutlay(OutlayMemberBO outlayMsg);
 
 }
